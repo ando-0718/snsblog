@@ -1,22 +1,17 @@
-// src/auth/auth.module.ts
-import { Module } from '@nestjs/common'
-import { JwtModule } from '@nestjs/jwt'
-import { PassportModule } from '@nestjs/passport'
-import { AuthService } from './auth.service'
-import { AuthController } from './auth.controller'
-import { JwtStrategy } from './jwt.strategy'
-import { UsersModule } from '../users/users.module'
+import { Module } from '@nestjs/common';
+import { AuthService } from './auth.service';
+import { EmailService } from './email.service';
+import { AuthController } from './auth.controller';
+import { PrismaModule } from '../prisma/prisma.module';
+import { JwtStrategy } from './jwt.strategy';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
-    PassportModule,
-    JwtModule.register({
-      secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: '5m' }, // アクセストークンの有効期限
-    }),
-    UsersModule,
+    PrismaModule,
+    JwtModule.register({}), // Strategyを使うために必要、詳細は別で設定可能
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, EmailService],
 })
 export class AuthModule {}

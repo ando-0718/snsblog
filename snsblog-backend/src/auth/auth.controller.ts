@@ -1,32 +1,54 @@
-// src/auth/auth.controller.ts
-import {
-  Controller, Post, Body, Res,
-} from '@nestjs/common'
-import { AuthService } from './auth.service'
-import { Response } from 'express'
+import { Controller, Post, Body, Res, Get, Query } from '@nestjs/common';
+import { Response } from 'express';
+import { AuthService } from './auth.service';
+import { CredentialsDto } from './dto/credentials.dto';
+import { RequestResetDto } from './dto/request-reset.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
-@Controller()
+@Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
   async login(
-    @Body() body: { email: string; password: string },
-    @Res({ passthrough: true }) res: Response,
+    @Body() dto: CredentialsDto,
+    @Res({ passthrough: true }) res: Response
   ) {
-    const user = await this.authService.validateUser(body.email, body.password)
+    const { accessToken, refreshToken } = await this.authService.login(
+      dto.email,
+      dto.password
+    );
 
-    const accessToken = this.authService.generateAccessToken(user.id)
-    const refreshToken = this.authService.generateRefreshToken(user.id)
-
-    // Cookie にリフレッシュトークンを設定（httpOnly）
+    // HTTP Only Cookie にトークンを保存
+    res.cookie('access_token', accessToken, {
+      httpOnly: true,
+      maxAge: 5 * 60 * 1000,
+    });
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7日
-    })
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
 
-    return { accessToken }
+    return { message: 'Login successful' };
+  }
+
+  @Post('register')
+  register(@Body() dto: CredentialsDto) {
+    return this.authService.register(dto.email, dto.password);
+  }
+
+  @Get('verify-email')
+  verifyEmail(@Query('token') token: string) {
+    return this.authService.verifyEmail(token);
+  }
+
+  @Post('request-password-reset')
+  requestReset(@Body() dto: RequestResetDto) {
+    return this.authService.sendPasswordResetEmail(dto.email);
+  }
+
+  @Post('reset-password')
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto.token, dto.password);
   }
 }

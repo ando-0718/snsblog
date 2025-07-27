@@ -10,3 +10,13 @@ datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  userId             String   @id @default(uuid()) @map("user_id")
+  email              String   @unique
+  hashedPassword     String @map("hashed_password")
+  hashedRefreshToken String? @map("hashed_refresh_token")
+  isVerified         Boolean  @default(false) @map("is_verified")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+}
