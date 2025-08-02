@@ -1,9 +1,16 @@
 import { useActionState } from "react";
 import Link from 'next/link'; 
-import { loginAction } from '../actions/login-action'
+import { loginAction } from '@/app/actions/login-action'
+import type { LoginType } from '@/types/login-types'
 
 export default function LoginPage() {
-  const initialState = {errors: {}}
+  const initialState: LoginType = {
+    errors: {
+      email: [],
+      password: [],
+      server: null
+    }
+  }
   const [state, formAction] = useActionState(loginAction, initialState)
 
   return (
@@ -20,12 +27,9 @@ export default function LoginPage() {
             className="w-full border px-3 py-2 rounded"
           />
         </div>
-        {state.errors?.email && (
-          <p className="text-red-500 text-sm">{state.errors?.email}</p>
-        )}
-        {state.errors?.emailAlready && (
-          <p className="text-red-500 text-sm">{state.errors?.emailAlready}</p>
-        )}
+        {state.errors?.email?.map((err, i) => ( 
+          <p key={i} className="text-red-500 text-sm">{err}</p>
+        ))}
         <div>
           <label htmlFor="password">パスワード</label>
           <input
@@ -36,8 +40,11 @@ export default function LoginPage() {
             className="w-full border px-3 py-2 rounded"
           />
         </div>
-        {state.errors?.password && (
-          <p className="text-red-500 text-sm">{state.errors?.password}</p>
+        {state.errors?.password?.map((err, i) => (
+          <p key={i} className="text-red-500 text-sm">{err}</p>
+        ))}
+        {state.errors?.server && (
+          <p className="text-red-500 text-sm">{state.errors?.server}</p>
         )}
         <button
           type="submit"

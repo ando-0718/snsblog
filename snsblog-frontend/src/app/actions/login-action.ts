@@ -1,8 +1,11 @@
 'use server'
 
+import { config } from '@/lib/config';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
-import { emailField, passwordField } from '../../utils/zod/schema';
+import { emailField, passwordField } from '@/utils/zod/schema';
+//これはいらなくなるかも
+import type { LoginType } from '@/types/login-types'
 
 export const loginSchema = z.object({
   emailField,
@@ -14,37 +17,42 @@ export type LoginFormState = {
   errors?: {
     email?: string
     password?: string
-    emailAlready?:string
+    mistake?:string
   }
 };
 
 export async function loginAction(
   //LoginFormStateが必要なければ削除する
-  prevState: LoginFormState,
+  prevState: LoginType,
   formData: FormData
-): Promise<LoginFormState> {
+): Promise<LoginType> {
   const raw = {
     email: formData.get('email'),
     password: formData.get('password'),
   };
   const result = loginSchema.safeParse(raw);
   if (!result.success) {
-    const errorTree = z.treeifyError(result.error);
-    const emailErrors = errorTree.properties?.emailField?.errors ?? [];
-    const passwordErrors = errorTree.properties?.passwordField?.errors ?? [];
-    const emailError = emailErrors[0] ?? null;
-    const passwordError = passwordErrors[0] ?? null;
+    const errorTree = z.treeifyError(result.error) as {
+      properties?: {
+        email?: { errors?: string[] }
+        password?: { errors?: string[] }
+      }
+    }
+    const emailErrors = errorTree.properties?.email?.errors ?? [];
+    const passwordErrors = errorTree.properties?.password?.errors ?? [];
+    // const emailError = emailErrors[0] ?? null;
+    // const passwordError = passwordErrors[0] ?? null;
     return {
       errors: {
-        email: emailError,
-        password: passwordError
+        email: emailErrors,
+        password: passwordErrors
       }
     };
   }
 
   const { emailField, passwordField } = result.data
   //apiは確認する
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+  const res = await fetch(`${config.apiUrl}/auth/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -54,8 +62,11 @@ export async function loginAction(
   })
 
   if (!res.ok) {
-    //ここにはサーバーからのメッセージを格納
-    //return { errors: 'ログインに失敗しました。' }
+    const server = await res.json();
+    return { errors: { 
+      server 
+      } 
+    }
   }
 
   //この部分のパスは修正する
