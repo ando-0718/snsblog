@@ -17,7 +17,7 @@ export class AuthService {
   async login(email: string, password: string) {
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user || !(await bcrypt.compare(password, user.hashedPassword))) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('メールアドレスまたはパスワードが正しくありません。');
     }
 
     const tokens = await this.generateTokens(user.id, user.email);
@@ -74,10 +74,10 @@ export class AuthService {
     const verificationUrl = `${this.configService.get<string>('FRONTEND_URL')}/auth/verify-email?token=${token}`;
     await this.emailService.sendVerificationEmail(email, verificationUrl);
 
-    return { message: '認証メールを送信しました' };
+    return { message: '認証メールを送信しました。' };
   }
 
-  async verifyEmail(token: string) {
+  async verifyRegister(token: string) {
     const payload = this.jwtService.verify(token);
     const userId = payload.sub;
 
@@ -86,7 +86,7 @@ export class AuthService {
       data: { isVerified: true },
     });
 
-    return { message: '本登録が完了しました' };
+    return { message: '本登録が完了しました。' };
   }
 
   async sendPasswordResetEmail(email: string) {

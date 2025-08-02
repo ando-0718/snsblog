@@ -37,9 +37,9 @@ export class AuthController {
     return this.authService.register(dto.email, dto.password);
   }
 
-  @Get('verify-email')
-  verifyEmail(@Query('token') token: string) {
-    return this.authService.verifyEmail(token);
+  @Get('verify-register')
+  verifyRegister(@Query('token') token: string) {
+    return this.authService.verifyRegister(token);
   }
 
   @Post('request-password-reset')
